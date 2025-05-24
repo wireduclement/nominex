@@ -1,0 +1,174 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f6f8;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.admin-card {
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.admin-card h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.admin-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-card input {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border 0.2s;
+}
+
+.admin-card input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.admin-card button {
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.admin-card button:hover {
+  background-color: #0056b3;
+}
+
+.small {
+  padding: 0.85em;
+  text-align: center;
+}
+
+.flash-container {
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+.flash-message {
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
+.flash-message.danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.flash-message.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.flash-message.info {
+  background-color: #eaedd4;
+  color: #ada130;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #000000;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar a:hover {
+  background-color: #FFD586;
+  color: white;
+  border-radius: 4px;
+}
+
+.sidebar {
+  padding: 10px;
+}
+
+.sidebar a.active {
+  background-color: #FFD586;
+  color: white;
+  font-weight: bold;
+}
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-badge {
+  width: 80px;
+  height: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.card-body p {
+  font-weight: bold;
+  font-size: xx-large;
+}
+
+.circular-chart {
+  display: block;
+  margin: 10px auto;
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 3.8;
+}
+
+.circle {
+  fill: none;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke: #000000;
+  stroke-dasharray: 0, 100;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.percentage {
+  font-size: 0.5em;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: #000000;
+} 
