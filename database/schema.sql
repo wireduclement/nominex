@@ -28,7 +28,8 @@ CREATE TABLE candidates (
 CREATE TABLE voting_codes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(50) UNIQUE NOT NULL,
-    has_voted BOOLEAN DEFAULT FALSE
+    has_voted TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Votes Table

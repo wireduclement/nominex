@@ -1,10 +1,12 @@
 import os
+from datetime import datetime, timezone
 from functools import wraps
 from database.db import Database
 from flask.views import MethodView
 from flask import Flask, render_template, redirect, url_for, flash, session, request
 from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
+import random, string
 
 
 load_dotenv()
@@ -23,6 +25,18 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def generate_codes(length=10):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+
+def vote_quantity(count):
+    codes = []
+    for _ in range(count):
+        code = generate_codes()
+        codes.append(code)
+    return codes
 
 
 class HomeView(MethodView):
@@ -63,29 +77,62 @@ class LoginView(MethodView):
 
 class DashboardView(MethodView):
     decorators = [login_required] 
+
     def get(self):
         return render_template("dashboard.html")
     
 
 class CodeView(MethodView):
     decorators = [login_required]
+
     def get(self):
-        return render_template("vote_codes.html")
+        generated_codes = db.read("voting_codes")
+        return render_template("vote_codes.html", generated_codes=generated_codes)
+    
+    def post(self):
+        action = request.form.get("action")
+
+        if action == "reset":
+            db.delete_all("voting_codes")
+            session["generated"] = False
+            flash("All voting codes has been reset.", "info")
+            return redirect(url_for("generate_codes"))
+        
+        if session.get("generated"):
+            flash("Codes already generated. Please reset first.", "info")
+            return redirect(url_for("generate_codes"))
+        
+        quantity = request.form.get("voting_codes", type=int)
+        if not quantity or quantity <= 0:
+            flash("Please enter a valid number", "info")
+            return redirect(url_for("generate_codes"))
+        
+        codes = vote_quantity(quantity)
+        for code in codes:
+            timestamp = datetime.now()
+            db.insert("voting_codes", ["code", "has_voted", "created_at"], [code, "No", timestamp])
+        
+        session["generated"] = True
+        flash(f"{quantity} code(s) generated successfully!", "success")
+        return redirect(url_for("generate_codes"))
     
 
 class PositionsView(MethodView):
     decorators = [login_required]
+
     def get(self):
         return render_template("positions.html")
     
 
 class CandidatesView(MethodView):
     decorators = [login_required]
+
     def get(self):
         return render_template("candidates.html")
     
 
 class ResultsView(MethodView):
+
     decorators = [login_required]
     def get(self):
         return render_template("results.html")

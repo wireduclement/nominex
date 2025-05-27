@@ -79,6 +79,12 @@ class Database:
         self.sql += " AND ".join(conditions)
         self.cursor.execute(self.sql, tuple(clause.values()))
         self.my_db.commit()
+    
+    
+    def delete_all(self, table_name):
+        self.cursor.execute(f"DELETE FROM {table_name}")
+        self.cursor.execute(f"ALTER TABLE {table_name} AUTO_INCREMENT = 1")
+        self.my_db.commit()
 
 
     def update(self, table, update, clause):

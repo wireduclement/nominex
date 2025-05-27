@@ -8,8 +8,8 @@
         <div class="sidebar">
             <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% else %}text-black{% endif %}">Dashboard</a>
             <a href="{{ url_for('generate_codes') }}" class="{% if request.endpoint == 'generate_codes' %}active{% else %}text-black{% endif %}">Generate Voting Codes</a>
-            <a href="{{ url_for('positions') }}" class="{% if request.endpoint == 'positions' %}active{% else %}text-black{% endif %}">Positions</a>
             <a href="{{ url_for('candidates') }}" class="{% if request.endpoint == 'candidates' %}active{% else %}text-black{% endif %}">Candidates</a>
+            <a href="{{ url_for('positions') }}" class="{% if request.endpoint == 'positions' %}active{% else %}text-black{% endif %}">Positions</a>
             <a href="{{ url_for('results') }}" class="{% if request.endpoint == 'results' %}active{% else %}text-black{% endif %}">Live Results</a>
             <a href="#reset-election">Reset Election</a>
             <a href="{{ url_for('logout') }}" >Logout</a>

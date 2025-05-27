@@ -1,8 +1,82 @@
 {% include "header.html" %}
 
-<div>
-    <div>
+<div class="container-fluid">
+    <div class="row">
         {% include "sidebar.html" %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <br>
+            <h1>Generate Voting Codes</h1>
+            <hr>
+
+            <!-- Flash message for caution -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            
+            <div class="row justify-content-center">
+                <div class="col-md-11 col-lg-10">
+                    <div class="d-flex align-items-center gap-3 mt-4 w-100">
+                        <form method="POST" action="{{ url_for('generate_codes') }}" class="d-flex align-items-center gap-2 flex-grow-1">
+                            <input type="number" name="voting_codes" placeholder="Enter number of codes to generate"
+                                class="form-control form-control-lg flex-grow-1"
+                                {% if session.get('generated') %}disabled{% endif %} required>
+
+                            <!-- Generate Button -->
+                            <button type="submit" name="action" value="generate"
+                                    class="btn btn-lg flex-shrink-0 {% if session.get('generated') %}btn-disabled{% else %}btn-warning{% endif %}" style="color: white;"
+                                    {% if session.get('generated') %}disabled{% endif %}>
+                                Generate Codes
+                            </button>
+
+                            <!-- Download Button -->
+                            <button type="submit" name="action" value="download"
+                                    class="btn btn-lg flex-shrink-0 {% if not session.get('generated') %}btn-disabled{% else %}btn-info{% endif %}" style="color: white;"
+                                    {% if not session.get('generated') %}disabled{% endif %}>
+                                Download as PDF
+                            </button>
+                        </form>
+
+
+                        <form method="POST" action="{{ url_for('generate_codes') }}" onsubmit="return confirm('Are you sure you want to reset all codes?');">
+                            <button type="submit" class="btn btn-danger btn-lg" name="action" value="reset" style="min-width: 100px;">Reset</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                   <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Code</th>
+                                <th scope="col">Used</th>
+                                <th scope="col">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code in generated_codes %}
+                            <tr>
+                                <th scope="row">{{ loop.index }}</th>
+                                <td>{{ code[1] }}</td>
+                                <td>{{ code[2] }}</td>
+                                <td>{{ code[3] if code[3] else 'null' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+            </div>
+
+        </main>
     </div>
 </div>
 
