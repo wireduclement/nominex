@@ -27,53 +27,52 @@
                     <div class="d-flex align-items-center gap-3 mt-4 w-100">
                         <form method="POST" action="{{ url_for('generate_codes') }}" class="d-flex align-items-center gap-2 flex-grow-1">
                             <input type="number" name="voting_codes" placeholder="Enter number of codes to generate"
-                                class="form-control form-control-lg flex-grow-1"
-                                {% if session.get('generated') %}disabled{% endif %} required>
+                                class="form-control form-control-lg flex-grow-1" required>
 
                             <!-- Generate Button -->
                             <button type="submit" name="action" value="generate"
-                                    class="btn btn-lg flex-shrink-0 {% if session.get('generated') %}btn-disabled{% else %}btn-warning{% endif %}" style="color: white;"
-                                    {% if session.get('generated') %}disabled{% endif %}>
+                                class="btn btn-warning btn-lg flex-shrink-0 text-white">     
                                 Generate Codes
                             </button>
+                        </form>
 
+                        <form method="POST" action="{{ url_for('generate_codes') }}">
                             <!-- Download Button -->
                             <button type="submit" name="action" value="download"
-                                    class="btn btn-lg flex-shrink-0 {% if not session.get('generated') %}btn-disabled{% else %}btn-info{% endif %}" style="color: white;"
-                                    {% if not session.get('generated') %}disabled{% endif %}>
+                                class="btn btn-info btn-lg flex-shrink-0 text-white">
                                 Download as PDF
                             </button>
                         </form>
 
-
                         <form method="POST" action="{{ url_for('generate_codes') }}" onsubmit="return confirm('Are you sure you want to reset all codes?');">
                             <button type="submit" class="btn btn-danger btn-lg" name="action" value="reset" style="min-width: 100px;">Reset</button>
                         </form>
+
                     </div>
                 </div>
             </div>
 
             <div class="row justify-content-center">
-                   <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Code</th>
-                                <th scope="col">Used</th>
-                                <th scope="col">Timestamp</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for code in generated_codes %}
-                            <tr>
-                                <th scope="row">{{ loop.index }}</th>
-                                <td>{{ code[1] }}</td>
-                                <td>{{ code[2] }}</td>
-                                <td>{{ code[3] if code[3] else 'null' }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Code</th>
+                            <th scope="col">Used</th>
+                            <th scope="col">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for code in generated_codes %}
+                        <tr>
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>{{ code[1] }}</td>
+                            <td>{{ code[2] }}</td>
+                            <td>{{ code[3] if code[3] else 'null' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
 
         </main>

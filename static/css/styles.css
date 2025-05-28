@@ -221,10 +221,3 @@ body {
   width: 90%;
   margin-top: 5vh;
 }
-
-.btn-disabled {
-  background-color: #6c757d !important;
-  color: white !important;
-  pointer-events: none;
-  opacity: 0.65;
-}

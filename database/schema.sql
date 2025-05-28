@@ -9,7 +9,6 @@ CREATE TABLE admin (
 CREATE TABLE positions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description TEXT
 );
 
 -- Candidates Table

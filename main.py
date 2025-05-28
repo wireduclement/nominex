@@ -1,12 +1,15 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from functools import wraps
 from database.db import Database
 from flask.views import MethodView
-from flask import Flask, render_template, redirect, url_for, flash, session, request
+from flask import Flask, render_template, redirect, url_for, flash, session, request, send_from_directory
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
 from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
 import random, string
+from pdf import PDFGenerator
 
 
 load_dotenv()
@@ -93,36 +96,96 @@ class CodeView(MethodView):
         action = request.form.get("action")
 
         if action == "reset":
+            codes = db.read("voting_codes")
+            if not codes:
+                flash("Cannot reset, no codes generated yet.", "info")
+                return redirect(url_for("generate_codes"))
+            
             db.delete_all("voting_codes")
             session["generated"] = False
             flash("All voting codes has been reset.", "info")
             return redirect(url_for("generate_codes"))
         
-        if session.get("generated"):
-            flash("Codes already generated. Please reset first.", "info")
+        elif action == "download":
+            codes = db.read("voting_codes")
+            if not codes:
+                flash("No codes available for download.", "info")
+                return redirect(url_for("generate_codes"))
+            
+            os.makedirs("static/codes", exist_ok=True)
+            filepath = "static/codes/voting_codes.pdf"
+            pdf = PDFGenerator()
+            pdf.add_codes(codes)
+            pdf.output(filepath)
+            return send_from_directory("static/codes", "voting_codes.pdf", as_attachment=True)
+        
+
+        elif action == "generate":
+            codes = db.read("voting_codes")
+            if codes:
+                flash("Codes already generated. Reset if you want to regenerate!", "info")
+                return redirect(url_for("generate_codes"))
+            
+            quantity = request.form.get("voting_codes", type=int)
+            if not quantity or quantity <= 0:
+                flash("Please enter a valid number", "info")
+                return redirect(url_for("generate_codes"))
+            
+            codes = vote_quantity(quantity)
+            for code in codes:
+                timestamp = datetime.now()
+                db.insert("voting_codes", ["code", "has_voted", "created_at"], [code, "No", timestamp])
+            
+            session["generated"] = True
+            flash(f"{quantity} code(s) generated successfully!", "success")
             return redirect(url_for("generate_codes"))
         
-        quantity = request.form.get("voting_codes", type=int)
-        if not quantity or quantity <= 0:
-            flash("Please enter a valid number", "info")
-            return redirect(url_for("generate_codes"))
-        
-        codes = vote_quantity(quantity)
-        for code in codes:
-            timestamp = datetime.now()
-            db.insert("voting_codes", ["code", "has_voted", "created_at"], [code, "No", timestamp])
-        
-        session["generated"] = True
-        flash(f"{quantity} code(s) generated successfully!", "success")
+        flash("Invalid action", "danger")
         return redirect(url_for("generate_codes"))
     
 
 class PositionsView(MethodView):
     decorators = [login_required]
 
-    def get(self):
-        return render_template("positions.html")
+    def get(self, edit_id=None):
+        created_positions = db.read("positions")
+        return render_template("positions.html", created_positions=created_positions, edit_id=edit_id)
     
+    def post(self):
+        action = request.form.get("action")
+
+        if action == "create_position":
+            position = request.form.get("positions")
+            if position:
+                db.insert("positions", ["name"], [position])
+                flash("Position created successfully!", "success")
+            return redirect(url_for("positions"))
+        
+        if action == "delete_position":
+            position_id = request.form.get("position_id")
+            if position_id:
+                db.delete("positions", {"id": int(position_id)})
+                flash("Position deleted successfully!", "success")
+            else:
+                flash("Invalid position ID", "danger")
+            return redirect(url_for("positions"))
+        
+        if action == "edit_position":
+            position_id = request.form.get("position_id")
+            return self.get(edit_id=int(position_id))
+
+        if action == "update_position":
+            position_id = request.form.get("position_id")
+            new_name = request.form.get("new_name")
+            print(f"Updating position {position_id} to {new_name}")
+            if position_id and new_name:
+                db.update("positions", {"name": new_name}, {"id": int(position_id)})
+                flash("Position updated successfully!", "success")
+            return redirect(url_for("positions"))
+        
+        return redirect(url_for("positions"))
+
+
 
 class CandidatesView(MethodView):
     decorators = [login_required]

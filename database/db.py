@@ -78,6 +78,7 @@ class Database:
             conditions.append(f"{key}=%s")
         self.sql += " AND ".join(conditions)
         self.cursor.execute(self.sql, tuple(clause.values()))
+        self.cursor.execute(f"ALTER TABLE {table_name} AUTO_INCREMENT = 1")
         self.my_db.commit()
     
     

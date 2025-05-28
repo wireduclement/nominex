@@ -1,8 +1,31 @@
 {% include "header.html" %}
 
-<div>
-    <div>
+<div class="container-fluid">
+    <div class="row">
         {% include "sidebar.html" %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <br>
+            <h1>Add Candidates</h1>
+            <hr>
+
+            <!-- Flash message for caution -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="row justify-content-center">
+                
+            </div>
+        </main>
     </div>
 </div>
 

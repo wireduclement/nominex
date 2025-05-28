@@ -1,8 +1,86 @@
 {% include "header.html" %}
 
-<div>
-    <div>
+<div class="container-fluid">
+    <div class="row">
         {% include "sidebar.html" %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <br>
+            <h1>Create Positions</h1>
+            <hr>
+
+            <!-- Flash message for caution -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="row justify-content-center">
+                <div class="col-md-11 col-lg-10">
+                    <div class="d-flex align-items-center gap-3 mt-4 w-100">
+                        <form method="POST" action="" class="d-flex align-items-center gap-2 flex-grow-1">
+                            <input type="text" name="positions" placeholder="Enter name of position"
+                                class="form-control form-control-lg flex-grow-1" required>
+
+                            <!-- Create Position Button -->
+                            <button type="submit" name="action" value="create_position"
+                                class="btn btn-warning btn-lg flex-shrink-0 text-white">     
+                                Create Position
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Positions</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for position in created_positions %}
+                        <tr>
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>
+                                {% if edit_id == position[0] %}
+                                    <form method="POST" action="{{ url_for('positions') }}" style="display:inline;">
+                                        <input type="hidden" name="position_id" value="{{ position[0] }}">
+                                        <input type="text" name="new_name" value="{{ position[1] }}" class="form-control" required>
+                                {% else %}
+                                    {{ position[1] }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if edit_id == position[0] %}
+                                    <button type="submit" name="action" value="update_position" class="btn btn-sm btn-success">Save</button>
+                                    <a href="{{ url_for('positions') }}" class="btn btn-sm btn-secondary">Cancel</a>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('positions') }}" style="display:inline;">
+                                        <input type="hidden" name="position_id" value="{{ position[0] }}">
+                                        <button type="submit" name="action" value="edit_position" class="btn btn-sm btn-info" style="color: white;">Edit</button>
+                                        <button type="submit" name="action" value="delete_position" class="btn btn-sm btn-danger" onclick="return confirm('Delete this position?')">Delete</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
     </div>
 </div>
 
