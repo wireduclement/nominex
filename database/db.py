@@ -78,7 +78,12 @@ class Database:
             conditions.append(f"{key}=%s")
         self.sql += " AND ".join(conditions)
         self.cursor.execute(self.sql, tuple(clause.values()))
+
+        # Reset and renumber IDs
+        self.cursor.execute(f"SET @count = 0")
+        self.cursor.execute(f"UPDATE {table_name} SET id = @count:= @count + 1")
         self.cursor.execute(f"ALTER TABLE {table_name} AUTO_INCREMENT = 1")
+        
         self.my_db.commit()
     
     

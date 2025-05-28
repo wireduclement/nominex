@@ -177,7 +177,6 @@ class PositionsView(MethodView):
         if action == "update_position":
             position_id = request.form.get("position_id")
             new_name = request.form.get("new_name")
-            print(f"Updating position {position_id} to {new_name}")
             if position_id and new_name:
                 db.update("positions", {"name": new_name}, {"id": int(position_id)})
                 flash("Position updated successfully!", "success")
