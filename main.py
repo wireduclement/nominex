@@ -5,8 +5,12 @@ from database.db import Database
 from flask.views import MethodView
 from flask import Flask, render_template, redirect, url_for, flash, session, request, send_from_directory
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from flask_wtf.file import FileField, FileAllowed
+from flask_bootstrap import Bootstrap5
+from wtforms import StringField, SubmitField, SelectField
+from wtforms.validators import DataRequired
 from werkzeug.security import check_password_hash
+from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import random, string
 from pdf import PDFGenerator
@@ -15,9 +19,23 @@ from pdf import PDFGenerator
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
+Bootstrap5(app)
 
 
 db = Database("localhost", "root", "", "voting_db")
+
+DEFAULT_PHOTO = "default.png"
+UPLOAD_FOLDER = os.path.join("static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+class CandidateForm(FlaskForm):
+    fullname = StringField("Full name", validators=[DataRequired()])
+    class_name = StringField("Class name", validators=[DataRequired()])
+    gender = SelectField("Gender", choices=["Male", "Female"])
+    photo = FileField("Photo", validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images Only!')])
+    position = SelectField("Position", coerce=int, validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 
 def login_required(f):
@@ -47,11 +65,13 @@ class HomeView(MethodView):
         return render_template("index.html") 
     
 
+# Voter's routes
 class VoteView(MethodView):
     def get(self):
         return render_template("vote.html")
 
 
+# Admin routes
 class LoginView(MethodView):
     def get(self):
         return render_template("admin.html")
@@ -185,17 +205,71 @@ class PositionsView(MethodView):
         return redirect(url_for("positions"))
 
 
-
-class CandidatesView(MethodView):
+class AddCandidatesView(MethodView):
     decorators = [login_required]
 
     def get(self):
-        return render_template("candidates.html")
+        form = CandidateForm()
+
+        positions = db.read("positions")
+        form.position.choices = [(p[0], p[1]) for p in positions]
+
+        return render_template("add_candidates.html", form=form)
+    
+    def post(self):
+        form = CandidateForm()
+
+        positions = db.read("positions")
+        form.position.choices = [(p[0], p[1]) for p in positions]
+
+        if form.validate_on_submit():
+            photo_file = form.photo.data
+            if photo_file and photo_file.filename:
+                filename = secure_filename(photo_file.filename)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                photo_file.save(filepath)
+            else:
+                filename = DEFAULT_PHOTO
+        
+            photo_path = os.path.join("uploads", filename)
+                
+            columns = ["full_name", "class_name", "gender", "photo_url", "position_id"]
+            values = [
+                form.fullname.data,
+                form.class_name.data,
+                form.gender.data,
+                photo_path,
+                form.position.data,
+            ]
+            db.insert("candidates", columns, values)
+
+            flash("Candidate added successfully!", "success")
+            return redirect(url_for("candidates"))
+        
+
+class CandidateView(MethodView):
+    decorators = [login_required]
+    
+    def get(self):
+        candidates = db.read("candidates")
+        positions = dict(db.read("positions"))
+
+        joined_candidates = []
+        for c in candidates:
+            candidate_dict = {
+                "photo_url": c[4],
+                "full_name": c[1],
+                "gender": c[3],
+                "class_name": c[2],
+                "position": positions.get(c[5], "Unknown")
+            }
+            joined_candidates.append(candidate_dict)
+        return render_template("candidates.html", candidates=joined_candidates)
     
 
 class ResultsView(MethodView):
-
     decorators = [login_required]
+
     def get(self):
         return render_template("results.html")
 
@@ -216,7 +290,8 @@ app.add_url_rule("/admin/login", view_func=LoginView.as_view("login"))
 app.add_url_rule("/admin/dashboard", view_func=DashboardView.as_view("dashboard"))
 app.add_url_rule("/admin/generate-codes", view_func=CodeView.as_view("generate_codes"))
 app.add_url_rule("/admin/positions", view_func=PositionsView.as_view("positions"))
-app.add_url_rule("/admin/candidates", view_func=CandidatesView.as_view("candidates"))
+app.add_url_rule("/admin/add-candidates", view_func=AddCandidatesView.as_view("add_candidates"))
+app.add_url_rule("/admin/candidates", view_func=CandidateView.as_view("candidates"))
 app.add_url_rule("/admin/results", view_func=ResultsView.as_view("results"))
 
 
