@@ -7,7 +7,7 @@
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <br>
-            <h1>Candidates</h1>
+            <h1>Candidates List</h1>
             <hr>
 
             <!-- Flash message for caution -->
@@ -25,26 +25,48 @@
 
             <div class="row">
                 <div class="col-md-10 col-lg-12 ms-5">
-                    <a href="{{ url_for('add_candidates')}}" class="btn btn-info btn-md" style="color: white;">Add Candidate</a>
-                    <table class="table table-bordered">
+                    <a href="{{ url_for('add_candidates') }}" class="btn btn-info btn-md" style="color: white;">Add Candidate</a>
+                    <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>Photo</th>
                                 <th>Name</th>
                                 <th>Gender</th>
                                 <th>Class</th>
                                 <th>Position</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
-                        <!-- Edit & delete rows buttons and func -->
+                        
                         <tbody>
                             {% for c in candidates %}
                             <tr>
+                                <th scope="row">{{ loop.index }}</th>
                                 <td><img src="{{ url_for('static', filename=c.photo_url) }}" width="100"></td>
                                 <td>{{ c.full_name }}</td>
                                 <td>{{ c.gender }}</td>
                                 <td>{{ c.class_name }}</td>
                                 <td>{{ c.position }}</td>
+                                <td>
+                                    <!-- Edit Form -->
+                                    <form method="GET" action="{{ url_for('edit_candidate', candidate_id=c.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-info">
+                                            <img src="{{ url_for('static', filename='svg/edit.svg') }}" width="20" height="20" alt="Edit">
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Delete Form -->
+                                    <form method="POST" action="{{ url_for('edit_candidate', candidate_id=c.id) }}" 
+                                        onsubmit="return confirm('Are you sure you want to delete this candidate? This action cannot be undone.')" 
+                                        style="display: inline;">
+                                        <input type="hidden" name="action" value="delete_candidate">
+                                        <input type="hidden" name="candidate_id" value="{{ c.id }}">
+                                        <button type="submit" class="btn btn-danger">
+                                            <img src="{{ url_for('static', filename='svg/del.svg') }}" width="20" height="20" alt="Delete">
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

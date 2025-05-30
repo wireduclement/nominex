@@ -33,7 +33,7 @@ class CandidateForm(FlaskForm):
     fullname = StringField("Full name", validators=[DataRequired()])
     class_name = StringField("Class name", validators=[DataRequired()])
     gender = SelectField("Gender", choices=["Male", "Female"])
-    photo = FileField("Photo", validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images Only!')])
+    photo = FileField("Photo", validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images Files Only!')])
     position = SelectField("Position", coerce=int, validators=[DataRequired()])
     submit = SubmitField("Submit")
 
@@ -102,7 +102,15 @@ class DashboardView(MethodView):
     decorators = [login_required] 
 
     def get(self):
-        return render_template("dashboard.html")
+        total_candidates = db.count_rows("candidates")
+        total_positions = db.count_rows("positions")
+        total_codes = db.count_rows("voting_codes")
+        return render_template(
+            "dashboard.html", 
+            total_candidates=total_candidates, 
+            total_positions=total_positions,
+            total_codes=total_codes
+        )
     
 
 class CodeView(MethodView):
@@ -246,6 +254,8 @@ class AddCandidatesView(MethodView):
             flash("Candidate added successfully!", "success")
             return redirect(url_for("candidates"))
         
+        return render_template("add_candidates.html", form=form)
+        
 
 class CandidateView(MethodView):
     decorators = [login_required]
@@ -257,6 +267,7 @@ class CandidateView(MethodView):
         joined_candidates = []
         for c in candidates:
             candidate_dict = {
+                "id": c[0],
                 "photo_url": c[4],
                 "full_name": c[1],
                 "gender": c[3],
@@ -265,6 +276,73 @@ class CandidateView(MethodView):
             }
             joined_candidates.append(candidate_dict)
         return render_template("candidates.html", candidates=joined_candidates)
+    
+
+class EditCandidateView(MethodView):
+    decorators = [login_required]
+
+    def get(self, candidate_id):
+        form = CandidateForm()
+
+        positions = db.read("positions")
+        form.position.choices = [(p[0], p[1]) for p in positions]
+
+        candidate = db.read("candidates", {"id": candidate_id})
+        if candidate:
+            form.fullname.data = candidate[0][1]
+            form.class_name.data = candidate[0][2]
+            form.gender.data = candidate[0][3]
+            form.photo.data = candidate[0][4]
+            form.position.data = candidate[0][5]
+        else:
+            flash("Candidate not found!", "danger")
+            return redirect(url_for("candidates"))
+
+        return render_template("edit_candidate.html", form=form, candidate_id=candidate_id)
+    
+    def post(self, candidate_id=None):
+        form = CandidateForm()
+
+        positions = db.read("positions")
+        form.position.choices = [(p[0], p[1]) for p in positions]
+        action = request.form.get("action")
+
+        if action == "update_candidate" and candidate_id:
+            if form.validate_on_submit():
+                photo_file = form.photo.data
+                if photo_file and photo_file.filename:
+                    filename = secure_filename(photo_file.filename)
+                    filepath = os.path.join(UPLOAD_FOLDER, filename)
+                    photo_file.save(filepath)
+                    photo_path = os.path.join("uploads", filename)
+                else:
+                    photo_path = db.read("candidates", {"id": candidate_id})[0][4]
+            
+                db.update(
+                    "candidates", 
+                    {
+                        "full_name": form.fullname.data,
+                        "class_name": form.class_name.data,
+                        "gender": form.gender.data,
+                        "photo_url": photo_path,
+                        "position_id": int(form.position.data)
+                    },
+                    {"id": candidate_id}
+                )
+                flash("Candidate updated successfully!", "success")
+                return redirect(url_for("candidates"))
+            
+        if action == "delete_candidate":
+            candidate_id = request.form.get("candidate_id")
+            if candidate_id:
+                db.delete("candidates", {"id": int(candidate_id)})
+                flash("Candidate deleted successfully!", "success")
+            else:
+                flash("Invalid candidate ID", "danger")
+            return redirect(url_for("candidates"))
+            
+        flash("Form submission error.", "danger")
+        return render_template("edit_candidate.html", form=form, candidate_id=candidate_id)
     
 
 class ResultsView(MethodView):
@@ -292,6 +370,7 @@ app.add_url_rule("/admin/generate-codes", view_func=CodeView.as_view("generate_c
 app.add_url_rule("/admin/positions", view_func=PositionsView.as_view("positions"))
 app.add_url_rule("/admin/add-candidates", view_func=AddCandidatesView.as_view("add_candidates"))
 app.add_url_rule("/admin/candidates", view_func=CandidateView.as_view("candidates"))
+app.add_url_rule("/admin/edit-candidate/<int:candidate_id>", view_func=EditCandidateView.as_view("edit_candidate"))
 app.add_url_rule("/admin/results", view_func=ResultsView.as_view("results"))
 
 

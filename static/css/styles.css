@@ -144,7 +144,7 @@ body {
 
 .sidebar a {
   display: block;
-  padding: 12px 20px;
+  padding: 15px 50px;
   text-decoration: none;
   color: #000000;
   transition: background-color 0.3s, color 0.3s;
@@ -152,17 +152,16 @@ body {
 
 .sidebar a:hover {
   background-color: #FFD586;
-  color: white;
   border-radius: 4px;
 }
 
 .sidebar {
   padding: 10px;
+  position: fixed;
 }
 
 .sidebar a.active {
   background-color: #FFD586;
-  color: white;
   font-weight: bold;
 }
 
@@ -220,4 +219,8 @@ body {
 .table {
   width: 90%;
   margin-top: 5vh;
+}
+
+.table-hover {
+  text-align: center;
 }

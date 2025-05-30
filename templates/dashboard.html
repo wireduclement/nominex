@@ -16,7 +16,7 @@
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Total Positions</h5>
-                    <p>0</p>
+                    <p>{{ total_positions | default(0, true) }}</p>
                 </div>
                 </div>
             </div>
@@ -26,7 +26,7 @@
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Total Candidates</h5>
-                    <p>0</p>
+                    <p>{{ total_candidates | default(0, true) }}</p>
                 </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Voting Codes Used</h5>
-                    <p>0</p>
+                    <p>0 / {{ total_codes | default(0, true) }}</p>
                 </div>
                 </div>
             </div>
@@ -80,9 +80,9 @@
                 <div class="card text-center">
                 <div class="card-body">
                     <h5 class="card-title">Quick Panel</h5><br>
-                    <a href="{{ url_for('generate_codes') }}" class="btn btn-secondary w-100 mb-4">Generate Codes</a>
+                    <a href="{{ url_for('generate_codes') }}" class="btn btn-secondary w-100 mb-4">Create Election</a>
                     <a href="{{ url_for('add_candidates') }}" class="btn btn-secondary w-100 mb-4">Add Candidates</a>
-                    <a href="#" class="btn btn-secondary w-100 mb-4">Create Election</a>
+                    <a href="#" class="btn btn-secondary w-100 mb-4">Reset Election</a>
                 </div>
                 </div>
             </div>
