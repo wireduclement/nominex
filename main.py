@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import random, string
 from pdf import PDFGenerator
+from collections import defaultdict
 
 
 load_dotenv()
@@ -31,10 +32,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 class CandidateForm(FlaskForm):
     fullname = StringField("Full name", validators=[DataRequired()])
-    class_name = StringField("Class name", validators=[DataRequired()])
+    class_name = StringField("Class", validators=[DataRequired()])
     gender = SelectField("Gender", choices=["Male", "Female"])
     photo = FileField("Photo", validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images Files Only!')])
-    position = SelectField("Position", coerce=int, validators=[DataRequired()])
+    position = SelectField("Aspiring Position", coerce=int, validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -349,7 +350,44 @@ class ResultsView(MethodView):
     decorators = [login_required]
 
     def get(self):
-        return render_template("results.html")
+        total_positions = db.count_rows("positions")
+        total_candidates = db.count_rows("candidates")
+
+        positions = db.read("positions") 
+        candidates = db.read("candidates") 
+
+        positions_dict = dict(positions)
+
+        grouped_candidates = defaultdict(list)
+        for c in candidates:
+            candidate_id, full_name, class_name, gender, photo_url, position_id = c
+            grouped_candidates[position_id].append({
+                "id": candidate_id,
+                "full_name": full_name,
+                "class_name": class_name,
+                "gender": gender,
+                "photo_url": photo_url,
+                "position_id": position_id,
+                "position_name": positions_dict.get(position_id, "Unknown"),
+                "percentage": random.randint(5, 95)
+            })
+
+        results_data = []
+        for pos_id, candidates_list in grouped_candidates.items():
+            results_data.append({
+                "position": {
+                    "id": pos_id,
+                    "name": positions_dict.get(pos_id, "Unknown")
+                },
+                "candidates": candidates_list
+            })
+
+        return render_template(
+            "results.html", 
+            total_positions=total_positions,
+            total_candidates=total_candidates,
+            results_data=results_data
+        )
 
 
 @app.route("/logout")

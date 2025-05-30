@@ -19,7 +19,6 @@ CREATE TABLE candidates (
     gender VARCHAR(10),
     photo_url VARCHAR(255),
     position_id INT NOT NULL,
-    role ENUM('candidate', 'winner', 'assistant') DEFAULT 'candidate',
     FOREIGN KEY (position_id) REFERENCES positions(id)
 );
 

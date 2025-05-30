@@ -224,3 +224,14 @@ body {
 .table-hover {
   text-align: center;
 }
+
+.d-flex{
+  padding: 10px;
+}
+
+.vote-bar {
+    background-color: #198754;
+    height: 100%;
+    width: var(--vote-width);
+    transition: width 0.6s ease;
+}

@@ -1,8 +1,50 @@
 {% include "header.html" %}
 
-<div>
-    <div>
+<div class="container-fluid">
+    <div class="row">
         {% include "sidebar.html" %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <br>
+            <h1>Live Results</h1>
+            <hr>
+
+            <!-- Flash message for caution -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="row justify-content-center">
+                <div class="col-md-10 col-lg-10">
+                    {% for item in results_data %}
+                    <div class="card my-5">
+                        <div class="card-header fw-bold" style="font-size: larger;">
+                        {{ item.position.name }}
+                        </div>
+                        <div class="card-body">
+                        {% for candidate in item.candidates %}
+                            <div class="d-flex justify-content-between">
+                                <span>{{ candidate.full_name }}</span>
+                                <span>{{ candidate.percentage }}%</span>
+                            </div>
+                            <div class="progress mb-2">
+                            <div class="progress-bar vote-bar" style="--vote-width: {{ candidate.percentage }}%"></div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
     </div>
 </div>
 
