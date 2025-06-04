@@ -12,17 +12,22 @@ body {
   padding: 2rem;
 }
 
-.left-pane img {
-  width: 120px;
+ .index-badge {
+  width: 150px;
   height: auto;
-  margin-bottom: 1.5rem;
-}
+  border-radius: 0 !important;
+  box-shadow: none !important;
+ }
 
 .right-pane {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #e9ecef;
+  background-image: url('../img/flyer-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #e9ecef;
   min-height: 100vh;
 }
 
@@ -174,8 +179,6 @@ body {
 .dashboard-badge {
   width: 80px;
   height: auto;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
 }
 
 .card-body p {

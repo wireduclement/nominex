@@ -14,7 +14,7 @@
       
       <!-- LEFT PANE -->
       <div class="col-md-6 left-pane">
-        <img src="{{ url_for('static', filename='img/badge.jpg') }}" alt="School Badge" />
+        <img src="{{ url_for('static', filename='img/badge.png') }}" alt="School Badge" class="index-badge"/>
         <h2>Welcome to the Voting App</h2>
         <p class="mt-3">This system allows students to vote securely and fairly. Enter your unique code to participate in school elections.</p>
       </div>
@@ -23,8 +23,21 @@
       <div class="col-md-6 right-pane">
         <div class="login-card text-center">
           <h5 class="mb-4 fw-bold">Enter Your Vote Code</h5>
-          <input type="text" class="form-control mb-3" placeholder="e.g. ABC123" />
-          <button class="btn btn-outline-primary w-100 mb-2">🗳️ Submit to vote</button>
+          
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+          {% endwith %}
+
+          <form method="POST">
+            <input type="text" name="vote_code" class="form-control mb-3" placeholder="e.g. ABC123" required />
+            <button class="btn btn-outline-primary w-100 mb-2">🗳️ Submit to vote</button>
+          </form>
           <a href="/admin/login" class="small text-decoration-none">Admin Access</a>
         </div>
       </div>

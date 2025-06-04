@@ -49,6 +49,16 @@ def login_required(f):
     return decorated_function
 
 
+def voter_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "voter_code" not in session:
+            flash("Please enter your vote code to continue.", "info")
+            return redirect(url_for("index"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def generate_codes(length=10):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
@@ -61,19 +71,39 @@ def vote_quantity(count):
     return codes
 
 
-class HomeView(MethodView):
+class VotersLoginView(MethodView):
     def get(self):
         return render_template("index.html") 
     
 
+    def post(self):
+        vote_code = request.form["vote_code"].strip().upper()
+
+        result = db.read("voting_codes")
+        matched = False
+        for row in result:
+            if vote_code in row:
+                matched = True
+                break
+
+        if matched:
+            session["voter_code"] = vote_code
+            return redirect(url_for("vote"))
+        else:
+            flash("Invalid Code!", "danger")
+            return redirect(url_for("index"))
+    
+
 # Voter's routes
 class VoteView(MethodView):
+    # decorators = [voter_required]
+
     def get(self):
         return render_template("vote.html")
 
 
 # Admin routes
-class LoginView(MethodView):
+class AdminLoginView(MethodView):
     def get(self):
         return render_template("admin.html")
     
@@ -118,8 +148,17 @@ class CodeView(MethodView):
     decorators = [login_required]
 
     def get(self):
+        page = int(request.args.get("page", 1))
+        per_page = 25
+        offset = (page - 1) * per_page
+
         generated_codes = db.read("voting_codes")
-        return render_template("vote_codes.html", generated_codes=generated_codes)
+        total = len(generated_codes)
+        paginated_codes = generated_codes[offset:offset + per_page]
+
+        total_pages = (total + per_page - 1) // per_page
+
+        return render_template("vote_codes.html", generated_codes=paginated_codes, total_pages=total_pages, current_page=page)
     
     def post(self):
         action = request.form.get("action")
@@ -400,9 +439,9 @@ def logout():
 
 
 # registers
-app.add_url_rule("/", view_func=HomeView.as_view("index"))
+app.add_url_rule("/", view_func=VotersLoginView.as_view("index"))
 app.add_url_rule("/vote", view_func=VoteView.as_view("vote"))
-app.add_url_rule("/admin/login", view_func=LoginView.as_view("login"))
+app.add_url_rule("/admin/login", view_func=AdminLoginView.as_view("login"))
 app.add_url_rule("/admin/dashboard", view_func=DashboardView.as_view("dashboard"))
 app.add_url_rule("/admin/generate-codes", view_func=CodeView.as_view("generate_codes"))
 app.add_url_rule("/admin/positions", view_func=PositionsView.as_view("positions"))
