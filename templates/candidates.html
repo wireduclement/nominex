@@ -43,7 +43,7 @@
                             {% for c in candidates %}
                             <tr>
                                 <th scope="row">{{ loop.index }}</th>
-                                <td><img src="{{ url_for('static', filename=c.photo_url) }}" width="100"></td>
+                                <td><img src="{{ url_for('static', filename=c.photo_url) }}" width="150"></td>
                                 <td>{{ c.full_name }}</td>
                                 <td>{{ c.gender }}</td>
                                 <td>{{ c.class_name }}</td>

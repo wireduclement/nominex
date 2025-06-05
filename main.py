@@ -1,4 +1,5 @@
 import os
+import random, string
 from datetime import datetime
 from functools import wraps
 from database.db import Database
@@ -7,12 +8,12 @@ from flask import Flask, render_template, redirect, url_for, flash, session, req
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from flask_bootstrap import Bootstrap5
-from wtforms import StringField, SubmitField, SelectField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, SelectField, PasswordField
+from wtforms.validators import DataRequired, Length
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-import random, string
+from werkzeug.security import generate_password_hash, check_password_hash
 from pdf import PDFGenerator
 from collections import defaultdict
 
@@ -37,6 +38,12 @@ class CandidateForm(FlaskForm):
     photo = FileField("Photo", validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images Files Only!')])
     position = SelectField("Aspiring Position", coerce=int, validators=[DataRequired()])
     submit = SubmitField("Submit")
+
+class ChangePasswordForm(FlaskForm):
+    current_pwd = PasswordField("Current Password", validators=[DataRequired(), Length(min=7)])
+    new_pwd = PasswordField("New Password", validators=[DataRequired(), Length(min=7, message="Password must be at least 7 characters long")])
+    c_new_pwd = PasswordField("Confirm New Password", validators=[DataRequired(), Length(min=7, message="Password must match")])
+    submit = SubmitField("Update")
 
 
 def login_required(f):
@@ -71,9 +78,10 @@ def vote_quantity(count):
     return codes
 
 
+# Voter's routes
 class VotersLoginView(MethodView):
     def get(self):
-        return render_template("index.html") 
+        return render_template("index.html")
     
 
     def post(self):
@@ -94,12 +102,93 @@ class VotersLoginView(MethodView):
             return redirect(url_for("index"))
     
 
-# Voter's routes
 class VoteView(MethodView):
-    # decorators = [voter_required]
+    decorators = [voter_required]
 
     def get(self):
-        return render_template("vote.html")
+        positions = db.read("positions")
+        candidates = db.read("candidates")
+
+        grouped = defaultdict(list)
+
+        for c in candidates:
+            candidate_dict = {
+                "id": c[0],
+                "name": c[1],
+                "position_id": c[5],
+                "photo_url": c[4]     
+            }
+            grouped[candidate_dict["position_id"]].append(candidate_dict)
+
+        results_data = []
+        for p in positions:
+            results_data.append({
+                "position": {
+                    "id": p[0],
+                    "name": p[1]
+                },
+                "candidates": grouped.get(p[0], [])
+            })
+
+        return render_template("vote.html", results_data=results_data)
+    
+
+    def post(self):
+        voter_code = session.get("voter_code")
+
+        voting_code = db.read("voting_codes", clause={"code": voter_code})
+        if not voting_code:
+            flash("Invalid voter code", "danger")
+            return redirect(url_for("vote"))
+        
+        voting_code_id = voting_code[0][0]
+       
+        positions = db.read("positions")
+        votes_to_insert = []
+
+        for position in positions:
+            position_id = position[0]
+            form_field = f"vote_{position_id}"
+            candidate_id = request.form.get(form_field)
+
+            if not candidate_id:
+                continue
+
+            candidates = db.read("candidates", clause={"id": candidate_id, "position_id": position_id})
+            if not candidates:
+                flash("Invalid candidate selection.", "danger")
+                return redirect(url_for("vote"))
+
+            columns = ["voting_code_id", "candidate_id", "position_id", "timestamp"]
+            values = [
+                voting_code_id,
+                candidate_id,
+                position_id,
+                datetime.now()
+            ]
+            votes_to_insert.append(values)
+
+        try:
+            for vote in votes_to_insert:
+                db.insert("votes", columns, vote)
+            session.pop("voter_code", None)
+            session["voted"] = True 
+            return redirect(url_for("thank_you"))
+        except Exception as e:
+            flash("An error occurred while submitting your votes. Please try again.", "danger")
+            return redirect(url_for("vote"))
+    
+
+class ThankYouView(MethodView):
+
+    def get(self):
+        if not session.get("voted"):
+            flash("Access denied. Please vote first.", "danger")
+            return redirect(url_for("index"))
+
+        session.pop("voted", None)
+        return render_template("thank_you.html")
+
 
 
 # Admin routes
@@ -427,6 +516,46 @@ class ResultsView(MethodView):
             total_candidates=total_candidates,
             results_data=results_data
         )
+    
+class ChangePasswordView(MethodView):
+    decorators = [login_required]
+
+    def get(self):
+        form = ChangePasswordForm()
+        return render_template("update_password.html", form=form)
+
+
+    def post(self):
+        form = ChangePasswordForm()
+        name = session.get("name", "admin")
+
+        if form.validate_on_submit():
+            current_pwd = form.current_pwd.data
+            new_pwd = form.new_pwd.data
+            c_new_pwd = form.c_new_pwd.data
+
+
+            if new_pwd != c_new_pwd:
+                flash("New passwords do not match.", "danger")
+                return render_template("update_password.html", form=form)
+
+            user = db.read("admin", {"username": name}, columns=["password"])
+            if not user:
+                flash("Admin not found.", "danger")
+                return render_template("update_password.html", form=form)
+
+            stored_password = user[0][0]
+
+            if not check_password_hash(stored_password, current_pwd):
+                flash("Incorrect current password.", "danger")
+                return render_template("update_password.html", form=form)
+
+            hashed_password = generate_password_hash(new_pwd, method='pbkdf2:sha256', salt_length=16)
+            db.update("admin", {"password": hashed_password}, {"username": name})
+
+            flash("Password updated successfully.", "success")
+
+        return render_template("update_password.html", form=form)
 
 
 @app.route("/logout")
@@ -441,6 +570,7 @@ def logout():
 # registers
 app.add_url_rule("/", view_func=VotersLoginView.as_view("index"))
 app.add_url_rule("/vote", view_func=VoteView.as_view("vote"))
+app.add_url_rule("/thank-you", view_func=ThankYouView.as_view("thank_you"))
 app.add_url_rule("/admin/login", view_func=AdminLoginView.as_view("login"))
 app.add_url_rule("/admin/dashboard", view_func=DashboardView.as_view("dashboard"))
 app.add_url_rule("/admin/generate-codes", view_func=CodeView.as_view("generate_codes"))
@@ -449,6 +579,7 @@ app.add_url_rule("/admin/add-candidates", view_func=AddCandidatesView.as_view("a
 app.add_url_rule("/admin/candidates", view_func=CandidateView.as_view("candidates"))
 app.add_url_rule("/admin/edit-candidate/<int:candidate_id>", view_func=EditCandidateView.as_view("edit_candidate"))
 app.add_url_rule("/admin/results", view_func=ResultsView.as_view("results"))
+app.add_url_rule("/change-password", view_func=ChangePasswordView.as_view("change_password"))
 
 
 if __name__ == "__main__":

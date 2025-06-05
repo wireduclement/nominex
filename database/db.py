@@ -57,9 +57,9 @@ class Database:
             self.sql += " WHERE "
             conditions = []
             for key, val in clause.items():
-                if like:  # Enable LIKE queries
+                if like:  
                     conditions.append(f"{key} LIKE %s")
-                    values.append(f"%{val}%")  # Add wildcard for partial matches
+                    values.append(f"%{val}%")
                 else:
                     conditions.append(f"{key} = %s")
                     values.append(val)  

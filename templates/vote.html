@@ -1,10 +1,63 @@
 {% include "header.html" %}
 
-<div class="container-fluid">
-    <div class="row">
-        
-    </div>
-</div>
+<body class="vote-page">
+    <div class="container my-5">
+        <h1 class="mb-4 text-center fw-bold">ELECTIONS</h1>
 
+        <!-- Flash message for caution -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+        <form method="POST" action="{{ url_for('vote') }}" onsubmit="return confirm('Are you sure you want to submit your votes? This action cannot be undone.');">
+
+            {% for group in results_data %}
+                {% if group.candidates %}
+                    <div class="card shadow-sm mb-5 p-3 border-0">
+                        <div class="card-header bg-white border-bottom-0">
+                            <h4 class="mb-0 fw-semibold">{{ group.position.name }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <table class="table align-middle mb-0">
+                                <tbody>
+                                    {% for candidate in group.candidates %}
+                                    <tr>
+                                        <td style="width: 5%;">
+                                            <input type="radio"
+                                                name="vote_{{ group.position.id }}"
+                                                value="{{ candidate.id }}"
+                                                required />
+                                        </td>
+                                        <td style="width: 15%;">
+                                            <img src="{{ url_for('static', filename=candidate.photo_url) }}"
+                                                alt="{{ candidate.name }}"
+                                                width="150" height="100" />
+                                        </td>
+                                        <td>
+                                            <strong class="fs-5" style="padding-left: 80px;">{{ candidate.name }}</strong>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="text-center mt-4">
+                <button class="btn btn-dark px-4 py-2" type="submit">🗳️ Submit Votes</button>
+            </div>
+        </form>
+    </div>
+</body>
 
 {% include "footer.html" %}

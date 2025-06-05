@@ -3,7 +3,7 @@ body {
 }
 
 .left-pane {
-  background-color: #f8f9fa;
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -34,7 +34,7 @@ body {
 .login-card {
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(68, 67, 67, 0.1);
   background-color: #fff;
   width: 100%;
   max-width: 400px;
@@ -52,7 +52,8 @@ body {
 .admin-body {
   margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: #f4f6f8;
+  background: #2e2b2b;
+  background: radial-gradient(circle, rgba(46, 43, 43, 1) 0%, rgba(254, 209, 106, 1) 95%);
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -233,8 +234,55 @@ body {
 }
 
 .vote-bar {
-    background-color: #198754;
-    height: 100%;
-    width: var(--vote-width);
-    transition: width 0.6s ease;
+  background-color: #198754;
+  height: 100%;
+  width: var(--vote-width);
+  transition: width 0.6s ease;
+}
+
+.pagination .page-link {
+  color: black;
+  background-color: white;
+  border-color: black;
+}
+
+.pagination .page-link:hover {
+  color: black;
+  background-color: #f8f9fa;
+  border-color: black;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: black;
+  color: white;
+  border-color: black;
+}
+
+.pagination .page-item.active .page-link:hover {
+  background-color: black;
+  color: white;
+  border-color: black;
+}
+
+.card-header h4 {
+  margin-bottom: 0;
+}
+
+input[type="radio"] {
+  transform: scale(1.3);
+}
+
+.vote-page {
+  background: #2e2b2b;
+  background: radial-gradient(circle, rgba(46, 43, 43, 1) 0%, rgba(254, 209, 106, 1) 95%);
+}
+
+.thank-you {
+  background: #2e2b2b;
+  background: radial-gradient(circle, rgba(46, 43, 43, 1) 0%, rgba(254, 209, 106, 1) 95%); 
+  color: whitesmoke;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
 }

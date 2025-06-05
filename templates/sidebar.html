@@ -26,6 +26,10 @@
               <img src="{{ url_for('static', filename='svg/result.svg') }}">
               Live Results
             </a>
+            <a href="{{ url_for('change_password') }}" class="{% if request.endpoint == 'change_password' %}active{% else %}text-black{% endif %}">
+              <img src="{{ url_for('static', filename='svg/pwd.svg') }}">
+              Change Password
+            </a>
             <a href="{{ url_for('logout') }}" >
               <img src="{{ url_for('static', filename='svg/logout.svg') }}">
               Logout
