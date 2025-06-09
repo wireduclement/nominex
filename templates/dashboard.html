@@ -36,7 +36,7 @@
                 <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Voting Codes Used</h5>
-                    <p>0 / {{ total_codes | default(0, true) }}</p>
+                    <p>{{ used_codes | default(0, true) }} / {{ total_codes | default(0, true) }}</p>
                 </div>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                 <div class="col-md-6 mb-3">
                     <div class="card text-center">
                         <div class="card-body">
-                        <h5 class="card-title">Vote Casts</h5>
+                        <h5 class="card-title">Overall Votes Casts %</h5>
                         <!-- implement actual code for the % circle -->
                         <svg viewBox="0 0 36 36" class="circular-chart">
                             <path class="circle-bg"
@@ -65,11 +65,11 @@
                                     a 15.9155 15.9155 0 0 1 0 31.831
                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
                             <path class="circle"
-                                stroke-dasharray="25, 100"
+                                stroke-dasharray="{{ vote_percent | default(0, true) }}, 100"
                                 d="M18 2.0845
                                     a 15.9155 15.9155 0 0 1 0 31.831
                                     a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                            <text x="18" y="20.35" class="percentage">25%</text>
+                            <text x="18" y="20.35" class="percentage">{{ vote_percent | default(0, true) }}%</text>
                         </svg>
                     </div>
                 </div>

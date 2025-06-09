@@ -33,7 +33,7 @@
                         {% for candidate in item.candidates %}
                             <div class="d-flex justify-content-between">
                                 <span>{{ candidate.full_name }}</span>
-                                <span>{{ candidate.percentage }}%</span>
+                                <span>{{ candidate.percentage }}% ({{ candidate.total_votes }} votes)</span>
                             </div>
                             <div class="progress mb-2">
                             <div class="progress-bar vote-bar" style="--vote-width: {{ candidate.percentage }}%"></div>

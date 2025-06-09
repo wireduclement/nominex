@@ -19,6 +19,7 @@ CREATE TABLE candidates (
     gender VARCHAR(10),
     photo_url VARCHAR(255),
     position_id INT NOT NULL,
+    total_votes INT NOT NULL DEFAULT 0,
     FOREIGN KEY (position_id) REFERENCES positions(id)
 );
 

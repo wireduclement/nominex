@@ -88,18 +88,15 @@ class VotersLoginView(MethodView):
     def post(self):
         vote_code = request.form["vote_code"].strip().upper()
 
-        result = db.read("voting_codes")
-        matched = False
-        for row in result:
-            if vote_code in row:
-                matched = True
-                break
-
-        if matched:
+        result = db.read("voting_codes", {"code": vote_code})
+        if result:
+            if result[0][2] == "Yes":
+                flash("This code has already been used", "danger")
+                return redirect(url_for("index"))
             session["voter_code"] = vote_code
             return redirect(url_for("vote"))
         else:
-            flash("Invalid Code!", "danger")
+            flash("Invalid Vote Code!", "danger")
             return redirect(url_for("index"))
     
 
@@ -117,7 +114,7 @@ class VoteView(MethodView):
                 "id": c[0],
                 "name": c[1],
                 "position_id": c[5],
-                "photo_url": c[4]     
+                "photo_url": c[4]
             }
             grouped[candidate_dict["position_id"]].append(candidate_dict)
 
@@ -137,11 +134,7 @@ class VoteView(MethodView):
     def post(self):
         voter_code = session.get("voter_code")
 
-        voting_code = db.read("voting_codes", clause={"code": voter_code})
-        if not voting_code:
-            flash("Invalid voter code", "danger")
-            return redirect(url_for("vote"))
-        
+        voting_code = db.read("voting_codes", clause={"code": voter_code})     
         voting_code_id = voting_code[0][0]
        
         positions = db.read("positions")
@@ -172,8 +165,15 @@ class VoteView(MethodView):
         try:
             for vote in votes_to_insert:
                 db.insert("votes", columns, vote)
+
+                candidate_id = vote[1]
+                current_vote = db.read("candidates", clause={"id": candidate_id})
+                new_total = current_vote[0][-1] + 1
+                db.update("candidates", {"total_votes": new_total}, {"id": candidate_id})
+
             session.pop("voter_code", None)
-            session["voted"] = True 
+            session["voted"] = True
+            db.update("voting_codes", {"has_voted": "Yes"}, {"code": voter_code})
             return redirect(url_for("thank_you"))
         except Exception as e:
             flash("An error occurred while submitting your votes. Please try again.", "danger")
@@ -226,11 +226,25 @@ class DashboardView(MethodView):
         total_candidates = db.count_rows("candidates")
         total_positions = db.count_rows("positions")
         total_codes = db.count_rows("voting_codes")
+
+        result = db.read("voting_codes")
+        used_codes = 0
+        for row in result:
+            if row[2] == "Yes":
+                used_codes += 1
+
+        if total_codes > 0:
+            vote_percent = round((used_codes / total_codes) * 100)
+        else:
+            vote_percent = 0
+
         return render_template(
             "dashboard.html", 
             total_candidates=total_candidates, 
             total_positions=total_positions,
-            total_codes=total_codes
+            total_codes=total_codes,
+            used_codes=used_codes,
+            vote_percent=vote_percent
         )
     
 
@@ -242,7 +256,7 @@ class CodeView(MethodView):
         per_page = 25
         offset = (page - 1) * per_page
 
-        generated_codes = db.read("voting_codes")   # check if voting codes has been used and count the number of votes
+        generated_codes = db.read("voting_codes")
         total = len(generated_codes)
         paginated_codes = generated_codes[offset:offset + per_page]
 
@@ -254,15 +268,24 @@ class CodeView(MethodView):
         action = request.form.get("action")
 
         if action == "reset":
-            codes = db.read("voting_codes")
-            if not codes:
-                flash("Cannot reset, no codes generated yet.", "info")
+            try:
+                codes = db.read("voting_codes")
+                if not codes:
+                    flash("Cannot reset, no codes generated yet.", "info")
+                    return redirect(url_for("generate_codes"))
+
+                db.delete_all("voting_codes")
+                session["generated"] = False
+                flash("All voting codes have been reset.", "info")
                 return redirect(url_for("generate_codes"))
-            
-            db.delete_all("voting_codes")
-            session["generated"] = False
-            flash("All voting codes has been reset.", "info")
-            return redirect(url_for("generate_codes"))
+
+            except IntegrityError as e:
+                if e.args[0] == 1451:
+                    flash("Reset blocked. They are already used to vote.", "danger")
+                else:
+                    flash("An unexpected database error occurred.", "danger")
+                return redirect(url_for("generate_codes"))
+
         
         elif action == "download":
             codes = db.read("voting_codes")
@@ -472,7 +495,7 @@ class EditCandidateView(MethodView):
                     flash("Invalid candidate ID", "danger")
             except IntegrityError as e:
                 if e.args[0] == 1451:
-                    flash("Cannot delete candidate, they already have votes recorded.", "danger")
+                    flash("Deletion blocked. They already have votes recorded.", "danger")
                 else:
                     flash("An unexpected database error occurred.", "danger")
             
@@ -495,8 +518,19 @@ class ResultsView(MethodView):
         positions_dict = dict(positions)
 
         grouped_candidates = defaultdict(list)
+
+        votes_per_position = defaultdict(int)
         for c in candidates:
-            candidate_id, full_name, class_name, gender, photo_url, position_id = c
+            position_id = c[5]
+            total_votes = c[6]
+            votes_per_position[position_id] += total_votes
+
+        for c in candidates:
+            candidate_id, full_name, class_name, gender, photo_url, position_id, total_votes = c
+
+            position_total = votes_per_position[position_id] or 1
+            percentage = round((total_votes / position_total) * 100)
+
             grouped_candidates[position_id].append({
                 "id": candidate_id,
                 "full_name": full_name,
@@ -504,8 +538,9 @@ class ResultsView(MethodView):
                 "gender": gender,
                 "photo_url": photo_url,
                 "position_id": position_id,
+                "total_votes": total_votes,
                 "position_name": positions_dict.get(position_id, "Unknown"),
-                "percentage": random.randint(5, 95)
+                "percentage": percentage
             })
 
         results_data = []
