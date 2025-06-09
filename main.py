@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from pdf import PDFGenerator
 from collections import defaultdict
+from pymysql.err import IntegrityError
 
 
 load_dotenv()
@@ -241,7 +242,7 @@ class CodeView(MethodView):
         per_page = 25
         offset = (page - 1) * per_page
 
-        generated_codes = db.read("voting_codes")
+        generated_codes = db.read("voting_codes")   # check if voting codes has been used and count the number of votes
         total = len(generated_codes)
         paginated_codes = generated_codes[offset:offset + per_page]
 
@@ -462,12 +463,19 @@ class EditCandidateView(MethodView):
                 return redirect(url_for("candidates"))
             
         if action == "delete_candidate":
-            candidate_id = request.form.get("candidate_id")
-            if candidate_id:
-                db.delete("candidates", {"id": int(candidate_id)})
-                flash("Candidate deleted successfully!", "success")
-            else:
-                flash("Invalid candidate ID", "danger")
+            try:
+                candidate_id = request.form.get("candidate_id")
+                if candidate_id:
+                    db.delete("candidates", {"id": int(candidate_id)})
+                    flash("Candidate deleted successfully!", "success")
+                else:
+                    flash("Invalid candidate ID", "danger")
+            except IntegrityError as e:
+                if e.args[0] == 1451:
+                    flash("Cannot delete candidate, they already have votes recorded.", "danger")
+                else:
+                    flash("An unexpected database error occurred.", "danger")
+            
             return redirect(url_for("candidates"))
             
         flash("Form submission error.", "danger")
