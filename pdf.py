@@ -26,3 +26,57 @@ class PDFGenerator:
 
     def output(self, filepath):
         self.pdf.output(filepath)
+
+
+class ResultPDFGenerator:
+    def __init__(self, results):
+        self.results = results
+
+    def generate(self, filename="election_winners.pdf"):
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+
+        # Title
+        pdf.set_font("Arial", "B", 20)
+        pdf.cell(0, 10, "Final Election Results", ln=True, align="C")
+        pdf.ln(10)
+
+        # Style settings
+        pdf.set_font("Arial", "", 12)
+        pdf.set_fill_color(230, 230, 230)
+
+        current_position = None
+        for result in self.results:
+            (
+                full_name,
+                class_name,
+                gender,
+                photo_url,
+                position_name,
+                total_votes,
+                rank
+            ) = result
+
+            if position_name != current_position:
+                pdf.ln(5)
+                pdf.set_font("Arial", "B", 14)
+                pdf.set_text_color(0)
+                pdf.cell(0, 10, f"Position: {position_name}", ln=True)
+                pdf.set_font("Arial", "B", 12)
+                pdf.set_fill_color(200, 220, 255)
+                pdf.cell(60, 8, "Role", 1, 0, "C", fill=True)
+                pdf.cell(70, 8, "Candidates", 1, 0, "C", fill=True)
+                pdf.cell(30, 8, "Class", 1, 0, "C", fill=True)
+                pdf.cell(30, 8, "Votes", 1, 1, "C", fill=True)
+                current_position = position_name
+
+            label = "Main" if rank == 1 else "Assistant"
+            pdf.set_font("Arial", "", 12)
+            pdf.set_fill_color(255, 255, 255)
+            pdf.cell(60, 8, label, 1)
+            pdf.cell(70, 8, full_name, 1)
+            pdf.cell(30, 8, class_name, 1)
+            pdf.cell(30, 8, str(total_votes), 1, ln=True)
+
+        pdf.output(filename)

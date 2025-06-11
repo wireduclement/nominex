@@ -14,7 +14,7 @@ from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
-from pdf import PDFGenerator
+from pdf import PDFGenerator, ResultPDFGenerator
 from collections import defaultdict
 from pymysql.err import IntegrityError
 
@@ -238,14 +238,61 @@ class DashboardView(MethodView):
         else:
             vote_percent = 0
 
+        active_session = db.read("election_sessions", clause={"active": 1})
+        is_active = bool(active_session)
+
         return render_template(
             "dashboard.html", 
             total_candidates=total_candidates, 
             total_positions=total_positions,
             total_codes=total_codes,
             used_codes=used_codes,
-            vote_percent=vote_percent
+            vote_percent=vote_percent,
+            is_active=is_active
         )
+    
+    def post(self):
+        action = request.form.get("action")
+        if action == "reset":
+            db.delete_all("votes")
+            db.delete_all("candidates")
+            db.delete_all("positions")
+            db.delete_all("voting_codes")
+            db.delete_all("final_results")
+            db.update("election_sessions", {"active": 0}, {"active": 1})
+
+            flash("System has been fully reset.", "success")
+            return redirect(url_for("dashboard"))
+        
+        if action == "close":
+            session = db.read("election_sessions", clause={"active": 1})
+            if not session:
+                flash("No active election session.", "danger")
+                return redirect(url_for("dashboard"))
+
+            session_id = session[0][0]
+            positions = db.read("positions")
+            candidates = db.read("candidates")
+
+            grouped = defaultdict(list)
+
+            for c in candidates:
+                candidate_id = c[0]
+                position_id = c[5]
+                total_votes = c[6]
+                grouped[position_id].append((candidate_id, total_votes))
+
+            for position_id, candidate_list in grouped.items():
+                sorted_candidates = sorted(candidate_list, key=lambda x: x[1], reverse=True)
+
+                for rank, (candidate_id, votes) in enumerate(sorted_candidates, start=1):
+                    columns = ["session_id", "candidate_id", "position_id", "total_votes", "rank"]
+                    values = [session_id, candidate_id, position_id, votes, rank]
+                    db.insert("final_results", columns, values)
+
+            db.update("election_sessions", {"active": 0}, {"id": session_id})
+            flash("Election closed and results saved.", "success")
+            return redirect(url_for("final_results"))
     
 
 class CodeView(MethodView):
@@ -277,6 +324,7 @@ class CodeView(MethodView):
                 db.delete_all("voting_codes")
                 session["generated"] = False
                 flash("All voting codes have been reset.", "info")
+                db.update("election_sessions", {"active": 0}, {"active": 1})
                 return redirect(url_for("generate_codes"))
 
             except IntegrityError as e:
@@ -319,6 +367,18 @@ class CodeView(MethodView):
             
             session["generated"] = True
             flash(f"{quantity} code(s) generated successfully!", "success")
+
+            current_year = datetime.now().year
+            session_name = f"{current_year} elections"
+            db.update("election_sessions", {"active": 0}, {"active": 1})
+
+            existing_session = db.read("election_sessions", clause={"name": session_name})
+            if existing_session:
+                session_id = existing_session[0][0]
+                db.update("election_sessions", {"active": 1}, {"id": session_id})
+            else:
+                db.insert("election_sessions", ["name", "active"], [session_name, 1])
+
             return redirect(url_for("generate_codes"))
         
         flash("Invalid action", "danger")
@@ -560,6 +620,73 @@ class ResultsView(MethodView):
             results_data=results_data
         )
     
+
+class FinalResultsView(MethodView):
+    def _get_final_results(self):
+        session = db.read("election_sessions", clause={"active": 0})
+        if not session:
+            return None, []
+
+        latest_session = sorted(session, key=lambda x: x[0], reverse=True)[0]
+        session_id = latest_session[0]
+        results = db.read("final_results", clause={"session_id": session_id})
+        positions = db.read("positions")
+        candidates = db.read("candidates")
+
+        position_map = {p[0]: p[1] for p in positions}
+        candidate_map = {c[0]: c for c in candidates}
+
+        final_results = []
+        for r in results:
+            _, _, candidate_id, position_id, votes, rank, _ = r
+            if rank not in (1, 2):
+                continue
+            candidate = candidate_map.get(candidate_id)
+            if not candidate:
+                continue
+            final_results.append((
+                candidate[1],
+                candidate[2],
+                candidate[3],
+                candidate[4],
+                position_map.get(position_id, "Unknown"),
+                votes,
+                rank
+            ))
+
+        return session_id, final_results
+
+    def get(self):
+        session_id, results = self._get_final_results()
+        if session_id is None:
+            flash("Cannot view! No closed election session found.", "info")
+            return redirect(url_for("dashboard"))
+
+        grouped = defaultdict(list)
+        for r in results:
+            full_name, class_name, gender, photo, position_name, votes, rank = r
+            grouped[position_name].append({
+                "full_name": full_name,
+                "class_name": class_name,
+                "photo": photo,
+                "votes": votes,
+                "rank": rank,
+                "position_name": position_name
+            })
+
+        return render_template("final_results.html", grouped_results=grouped)
+
+    def post(self):
+        action = request.form.get("action")
+        if action == "download_results":
+            _, results = self._get_final_results()
+            os.makedirs("static/results", exist_ok=True)
+            filepath = "static/results/election_winners.pdf"
+            pdf = ResultPDFGenerator(results)
+            pdf.generate(filepath)
+            return send_from_directory("static/results", "election_winners.pdf", as_attachment=True)
+
+        
 class ChangePasswordView(MethodView):
     decorators = [login_required]
 
@@ -622,6 +749,7 @@ app.add_url_rule("/admin/add-candidates", view_func=AddCandidatesView.as_view("a
 app.add_url_rule("/admin/candidates", view_func=CandidateView.as_view("candidates"))
 app.add_url_rule("/admin/edit-candidate/<int:candidate_id>", view_func=EditCandidateView.as_view("edit_candidate"))
 app.add_url_rule("/admin/results", view_func=ResultsView.as_view("results"))
+app.add_url_rule("/admin/final-results", view_func=FinalResultsView.as_view("final_results"))
 app.add_url_rule("/change-password", view_func=ChangePasswordView.as_view("change_password"))
 
 

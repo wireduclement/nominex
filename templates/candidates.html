@@ -24,9 +24,10 @@
             {% endwith %}
 
             <div class="row">
-                <div class="col-md-10 col-lg-12 ms-5">
+                <div class="col-md-10 col-lg-12">
                     <a href="{{ url_for('add_candidates') }}" class="btn btn-info btn-md" style="color: white;">Add Candidate</a>
-                    <table class="table table-hover">
+                    {% if candidates %}
+                    <table class="table table-striped">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -71,7 +72,14 @@
                             {% endfor %}
                         </tbody>
                     </table>
-
+                    {% else %}
+                    <div class="d-flex justify-content-center align-items-center" style="height: 50vh; width: 100%; color: rgb(138, 137, 137);">
+                        <div class="alert text-center" role="alert" style="max-width: 90%; width: auto;">
+                            <h4 class="alert-heading">No Candidates Registered Yet</h4>
+                            <p>There are currently no candidates in the system. Click the "Add Candidate" button above to register the first candidate.</p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </main>

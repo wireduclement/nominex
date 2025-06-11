@@ -23,6 +23,7 @@
             {% endwith %}
 
             <div class="row justify-content-center">
+                {% if results_data %}
                 <div class="col-md-10 col-lg-10">
                     {% for item in results_data %}
                     <div class="card my-5">
@@ -43,6 +44,13 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% else %}
+                <div class="d-flex justify-content-center align-items-center" style="height: 50vh; width: 100%; color: rgb(138, 137, 137);">
+                    <div class="alert text-center" role="alert" style="max-width: 90%; width: auto;">
+                        <h4 class="alert-heading">No Live Results Yet</h4>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </main>
     </div>

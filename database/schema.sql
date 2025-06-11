@@ -47,5 +47,21 @@ CREATE TABLE votes (
 CREATE TABLE election_sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    active BOOLEAN DEFAULT FALSE
+    active BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Election Final Results
+CREATE TABLE final_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id INT NOT NULL,
+    candidate_id INT NOT NULL,
+    position_id INT NOT NULL,
+    total_votes INT NOT NULL,
+    rank INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (session_id) REFERENCES election_sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+    FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE CASCADE
 );

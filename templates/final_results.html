@@ -1,0 +1,73 @@
+{% include "header.html" %}
+
+<div class="container-fluid">
+    <div class="row">
+        {% include "sidebar.html" %}
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <br>
+            <h1>Final Results</h1>
+            <hr>
+
+            <!-- Flash message for caution -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% if grouped_results %}
+            {% for position_id, candidates in grouped_results.items() %}
+            <h4 style="padding-top: 20px; padding-bottom: 0px;">{{ candidates[0].position_name }}</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Votes</th>
+                    <th>Rank</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for c in candidates %}
+                    <tr>
+                        <td><img src="{{ url_for('static', filename=c.photo) }}" height="80"></td>
+                        <td>{{ c.full_name }}</td>
+                        <td>{{ c.class_name }}</td>
+                        <td>{{ c.votes }}</td>
+                        <td>{{ c.rank }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endfor %}
+
+            <form method="POST" action="{{ url_for('final_results') }}">
+                <button type="submit" name="action" value="download_results"
+                    class="btn btn-success">
+                    Download Winners PDF
+                </button>
+            </form>
+            {% else %}
+            <div class="d-flex justify-content-center align-items-center" style="height: 50vh; width: 100%; color: rgb(138, 137, 137);">
+                <div class="alert text-center" role="alert" style="max-width: 90%; width: auto;">
+                    <h4 class="alert-heading">No Final Results Yet</h4>
+                </div>
+            </div>
+            {% endif %}
+
+
+        </main>
+    </div>
+</div>
+
+
+{% include "footer.html" %}
