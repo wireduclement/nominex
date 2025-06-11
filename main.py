@@ -639,8 +639,8 @@ class FinalResultsView(MethodView):
         final_results = []
         for r in results:
             _, _, candidate_id, position_id, votes, rank, _ = r
-            if rank not in (1, 2):
-                continue
+            # if rank not in (1, 2):
+            #     continue
             candidate = candidate_map.get(candidate_id)
             if not candidate:
                 continue
@@ -674,15 +674,20 @@ class FinalResultsView(MethodView):
                 "position_name": position_name
             })
 
+        for position in grouped:
+            grouped[position].sort(key=lambda x: x["rank"])
+
         return render_template("final_results.html", grouped_results=grouped)
 
     def post(self):
         action = request.form.get("action")
         if action == "download_results":
             _, results = self._get_final_results()
+
             os.makedirs("static/results", exist_ok=True)
+            top_two = [r for r in results if r[6] in (1, 2)]
             filepath = "static/results/election_winners.pdf"
-            pdf = ResultPDFGenerator(results)
+            pdf = ResultPDFGenerator(top_two)
             pdf.generate(filepath)
             return send_from_directory("static/results", "election_winners.pdf", as_attachment=True)
 
