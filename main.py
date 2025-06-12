@@ -659,7 +659,7 @@ class FinalResultsView(MethodView):
     def get(self):
         session_id, results = self._get_final_results()
         if session_id is None:
-            flash("Cannot view! No closed election session found.", "info")
+            flash("Cannot view final results until elections are closed!.", "info")
             return redirect(url_for("dashboard"))
 
         grouped = defaultdict(list)
