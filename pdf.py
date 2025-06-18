@@ -1,4 +1,5 @@
 from fpdf import FPDF
+from datetime import datetime
 
 class PDFGenerator:
     def __init__(self, title="Voting Codes"):
@@ -39,7 +40,7 @@ class ResultPDFGenerator:
 
         # Title
         pdf.set_font("Arial", "B", 20)
-        pdf.cell(0, 10, "Final Election Results", ln=True, align="C")
+        pdf.cell(0, 10, f"{datetime.now().year} Final Election Results", ln=True, align="C")
         pdf.ln(10)
 
         # Style settings
