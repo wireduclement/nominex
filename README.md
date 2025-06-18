@@ -10,7 +10,6 @@ This is an offline voting application built for a school that allows a secure an
 - [Project Structure](#project-structure)
 - [Installation and Setup](#installation-and-setup)
 - [Usage](#usage)
-- [License](#license)
 
 ## Overview
 
