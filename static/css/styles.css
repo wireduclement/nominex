@@ -286,3 +286,49 @@ input[type="radio"] {
   justify-content: center;
   min-height: 100vh;
 }
+
+.custom-radio {
+  position: relative;
+  padding-left: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+}
+
+.custom-radio input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radio-mark {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  background-color: #ccc;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition: 0.3s;
+}
+
+.custom-radio input:checked ~ .radio-mark {
+  background-color: #0a0a0a;
+}
+
+.radio-mark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  top: 4px;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: white;
+}
+
+.custom-radio input:checked ~ .radio-mark::after {
+  display: block;
+}

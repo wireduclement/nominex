@@ -27,7 +27,7 @@ Bootstrap5(app)
 
 db = Database("localhost", "root", "", "voting_db")
 
-DEFAULT_PHOTO = "default.png"
+DEFAULT_PHOTO = "default.jpg"
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 

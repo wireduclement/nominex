@@ -30,11 +30,14 @@
                                 <tbody>
                                     {% for candidate in group.candidates %}
                                     <tr>
-                                        <td style="width: 5%;">
-                                            <input type="radio"
-                                                name="vote_{{ group.position.id }}"
-                                                value="{{ candidate.id }}"
-                                                required />
+                                        <td style="width: 8%;">
+                                            <label class="custom-radio">
+                                                <input type="radio"
+                                                    name="vote_{{ group.position.id }}"
+                                                    value="{{ candidate.id }}"
+                                                    required />
+                                                    <span class="radio-mark"></span>
+                                            </label>
                                         </td>
                                         <td style="width: 15%;">
                                             <img src="{{ url_for('static', filename=candidate.photo_url) }}"
