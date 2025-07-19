@@ -1,4 +1,4 @@
-# School Voting Application
+# Nominex - School Voting Application
 
 This is an offline voting application built for a school that allows a secure and efficient voting process. The app is designed for both voters (students using one-time codes) and administrative staff (headteacher and designated personnel). Voters enter their unique voting code, cast their vote for multiple positions, and view the live results—all without needing a full internet connection.
 
